@@ -1,0 +1,50 @@
+theme:
+  mode: dark
+  colors:
+    background: "#0D0D0D"
+    panel: "#1A1A2E"
+    accent: "#00E5FF"
+    warn: "#FFB300"
+    text: "#FFFFFF"
+    text_secondary: "#9E9E9E"
+    danger: "#FF5252"
+    success: "#00E676"
+    gantt_bar: ["#00E5FF", "#FFB300", "#00E676", "#FF5252", "#AB47BC", "#FF7043"]
+timing:
+  animation_interval_ms: 800
+  lazy_render_delay_ms: 10
+  tick_step: 1
+algorithms:
+  scoring:
+    weight_waiting: 0.32
+    weight_turnaround: 0.28
+    weight_response: 0.22
+    weight_cpu_idle: 0.06
+    weight_context_switches: 0.05
+    weight_fairness: 0.07
+  recommendation:
+    priority_spread_min: 3
+    rr_min_processes: 5
+    rr_arrival_span_min: 4
+    sjf_burst_variance_min: 6
+    sjf_avg_burst_max: 5
+  priority:
+    preemptive_slice: 1
+  defaults:
+    quantum: 2
+    priority_mode: Preemptive
+    process_arrival: 0
+    process_burst: 1
+    process_priority: 1
+ui:
+  window:
+    width: 1100
+    height: 750
+  gantt:
+    row_height_min: 28
+    row_height_max: 40
+    margin_left: 50
+    margin_right: 10
+  table:
+    font: Consolas 10
+    row_height: 26

@@ -1,0 +1,7 @@
+# Algorithm to use by default.
+# algorithm: FCFS
+
+# Score weights (higher = greater penalty).
+# scoring:
+#   weight_waiting: 1.0
+#   weight_turnaround: 1.0
