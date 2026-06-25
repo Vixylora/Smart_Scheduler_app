@@ -25,10 +25,12 @@ class MainWindow(ctk.CTk):
         self.quantum = ses.get('quantum', cfg['algorithms']['defaults']['quantum'])
         self.prio_mode = ses.get('priority_mode', cfg['algorithms']['defaults']['priority_mode'])
         self.simulating = False; self.cursor = 0
+        self.selected_pid = None
         self._build_menu()
         self._build_ui()
         self._refresh()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
 
     def _build_menu(self):
         mb = Menu(self, bg=self.theme.panel, fg=self.theme.text, activebackground=self.theme.accent, activeforeground="#000", font=("Segoe UI", 9))
@@ -115,8 +117,29 @@ class MainWindow(ctk.CTk):
         proc_frame = ctk.CTkFrame(tables_frame, fg_color=self.theme.panel, corner_radius=8)
         proc_frame.grid(row=0, column=0, sticky="nsew", padx=(0,4))
         ctk.CTkLabel(proc_frame, text="Processes", font=("Segoe UI", 10, "bold"), text_color=self.theme.accent).pack(anchor="w", pady=(6,2), padx=8)
-        self.proc_w = ProcessTableWidget(proc_frame, self.theme, self.cfg, self._on_proc_change)
+        self.proc_w = ProcessTableWidget(proc_frame, self.theme, self.cfg, self._on_proc_change, self._on_row_selected)
         self.proc_w.pack(fill="both", expand=True, padx=4, pady=(0,4))
+
+        # Process Editor Panel
+        self.editor_frame = ctk.CTkFrame(proc_frame, fg_color="transparent")
+        self.editor_frame.pack(fill="x", padx=4, pady=(0,8))
+        
+        self.edit_title = ctk.CTkLabel(self.editor_frame, text="Select a process to edit", font=("Segoe UI", 10, "italic"), text_color=self.theme.text_secondary)
+        self.edit_title.pack(anchor="w")
+
+        self.edit_inputs = {}
+        input_grid = ctk.CTkFrame(self.editor_frame, fg_color="transparent")
+        input_grid.pack(fill="x", pady=4)
+
+        fields = [("PID", "pid"), ("Arr.", "arrival"), ("Burst", "burst"), ("Prio.", "priority")]
+        for i, (label, key) in enumerate(fields):
+            ctk.CTkLabel(input_grid, text=label, font=("Segoe UI", 9)).grid(row=0, column=i*2, padx=(2,0))
+            entry = ctk.CTkEntry(input_grid, width=50, font=("Consolas", 10))
+            entry.grid(row=0, column=i*2+1, padx=(0,8))
+            self.edit_inputs[key] = entry
+
+        self.apply_btn = ctk.CTkButton(self.editor_frame, text="Apply Changes", height=24, font=("Segoe UI", 9), command=self._apply_edit)
+        self.apply_btn.pack(fill="x", pady=(4,0))
 
         stats_frame = ctk.CTkFrame(tables_frame, fg_color=self.theme.panel, corner_radius=8)
         stats_frame.grid(row=0, column=1, sticky="nsew", padx=4)
@@ -139,7 +162,6 @@ class MainWindow(ctk.CTk):
 
         ctrl_frame = ctk.CTkFrame(self, fg_color=self.theme.panel, corner_radius=8)
         ctrl_frame.grid(row=3, column=0, sticky="nsew", padx=8, pady=4)
-
         ctk.CTkLabel(ctrl_frame, text="Controls", font=("Segoe UI", 11, "bold"), text_color=self.theme.accent).pack(anchor="w", pady=(6,2), padx=8)
 
         r1 = ctk.CTkFrame(ctrl_frame, fg_color="transparent")
@@ -191,15 +213,26 @@ class MainWindow(ctk.CTk):
         self.adv_algo.pack(anchor="w", padx=8)
         self.adv_why = ctk.CTkLabel(adv, text="", font=("Segoe UI", 10), text_color="#ccc", wraplength=350, justify="left")
         self.adv_why.pack(anchor="w", padx=8, pady=(0,6))
+    def _on_algo(self, _):
+        self.algorithm = self.algo_cb.get()
+        if self.algorithm == "Priority":
+            self.prio_seg.configure(state="normal")
+        else:
+            self.prio_seg.configure(state="disabled")
+            if self.prio_mode != "Non-preemptive":
+                self.prio_mode = "Non-preemptive"
+                self.prio_seg.set(self.prio_mode)
+        self._refresh()
 
-    def _on_algo(self, _): self.algorithm = self.algo_cb.get(); self._refresh()
-    def _on_proc_change(self): self._refresh()
+    def _on_proc_change(self):
+        self.engine.invalidate()
+        self._refresh()
 
     def _on_quantum_change(self):
         try:
             self.quantum = max(1, int(self.quantum_entry.get()))
         except ValueError:
-            self.quantum = self.cfg['algorithms']['defaults']['quantum']
+            self.quantum = self.cfg["algorithms"]["defaults"]["quantum"]
             self.quantum_entry.delete(0, "end")
             self.quantum_entry.insert(0, str(self.quantum))
         self.engine.invalidate(); self._refresh()
@@ -207,6 +240,45 @@ class MainWindow(ctk.CTk):
     def _on_prio_mode_change(self, val):
         self.prio_mode = val
         self.engine.invalidate(); self._refresh()
+
+    def _on_row_selected(self, pid):
+        self.selected_pid = pid
+        process = next((p for p in self.processes if p.pid == pid), None)
+        if not process:
+            return
+        self.edit_title.configure(text=f"Editing Process: {pid}", font=("Segoe UI", 10, "bold"))
+        for key, entry in self.edit_inputs.items():
+            entry.delete(0, "end")
+            if key == "pid":
+                entry.insert(0, str(process.pid))
+                entry.configure(state="disabled")
+            else:
+                val = getattr(process, key)
+                entry.insert(0, str(val))
+                entry.configure(state="normal")
+
+    def _apply_edit(self):
+        if not self.selected_pid:
+            return
+        
+        try:
+            self.edit_inputs['pid'].configure(state='normal')
+            new_arrival = int(self.edit_inputs['arrival'].get())
+            new_burst = int(self.edit_inputs['burst'].get())
+            new_prio = int(self.edit_inputs['priority'].get())
+            
+            process = next((p for p in self.processes if p.pid == self.selected_pid), None)
+            if not process:
+                raise ValueError("Process not found.")
+            
+            process.arrival = new_arrival
+            process.burst = new_burst
+            process.priority = new_prio
+            
+            self.edit_inputs['pid'].configure(state='disabled')
+            self._on_proc_change()
+        except ValueError as e:
+            messagebox.showerror("Edit Error", f"Invalid input: {e}")
 
     def _play(self):
         self.simulating = not self.simulating
@@ -229,16 +301,33 @@ class MainWindow(ctk.CTk):
 
     def _tick(self):
         if not self.simulating: return
-        self.cursor += 1; self._refresh()
+        self.cursor += 1
         s = self.engine.simulate(self.processes, self.algorithm, self.quantum, self.prio_mode)
+        if not s: return
+        
+        for p in self.processes:
+            consumed = 0
+            for seg in s.get("timeline", []):
+                if seg["pid"] == p.pid and seg["start"] < self.cursor:
+                    seg_end = min(seg["end"], self.cursor)
+                    consumed += seg_end - seg["start"]
+            p.remaining = max(0, p.burst - int(consumed))
+            
+        self.proc_w.set_processes(self.processes)
+        self._update_metrics(s)
+        self.gantt.set_data(s.get("timeline", []) if s else [], self.cursor)
+        self._update_stats(s)
+        self.stat_lbl.configure(text=f"● {'RUNNING' if self.simulating else 'STOPPED'}", text_color=self.theme.warn if self.simulating else self.theme.accent)
+
         total = s.get('total_time', 0)
         if self.cursor >= total:
-            self.simulating = False; self.play_btn.configure(text="▶ Play", fg_color=self.theme.accent); self._refresh()
+            self.simulating = False
+            self.play_btn.configure(text="▶ Play", fg_color=self.theme.accent)
+            self._refresh()
         else:
             self.after(self.engine.auto_tune_interval(self.processes), self._tick)
 
     def _refresh(self):
-        self.engine.invalidate()
         s = self.engine.simulate(self.processes, self.algorithm, self.quantum, self.prio_mode)
         comp = self.engine.compare(self.processes)
         rec = self.engine.recommend(self.processes)

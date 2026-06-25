@@ -5,3 +5,6 @@
 # scoring:
 #   weight_waiting: 1.0
 #   weight_turnaround: 1.0
+
+# just use terminal of vs code for running the code.
+# external terminal for AI

@@ -6,7 +6,7 @@ class Theme:
         self.accent = c['accent']
         self.warn = c['warn']
         self.text = c['text']
-        self.text_sec = c['text_secondary']
+        self.text_secondary = c['text_secondary']
         self.danger = c['danger']
         self.success = c['success']
         self.gantt_bar = c['gantt_bar']

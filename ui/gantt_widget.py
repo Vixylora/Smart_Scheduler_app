@@ -16,7 +16,7 @@ class GanttWidget(tk.Canvas):
         if w < 10: w = 600
         if h < 10: h = self.cfg['ui']['gantt'].get('height', 150)
         if not self.timeline:
-            self.create_text(w//2, h//2, text="Run simulation to see timeline", fill=self.theme.text_sec, font=("monospace", 10))
+            self.create_text(w//2, h//2, text="Run simulation to see timeline", fill=self.theme.text_secondary, font=("monospace", 10))
             return
         total = self.timeline[-1]["end"]
         if total <= 0: return
@@ -28,7 +28,7 @@ class GanttWidget(tk.Canvas):
         colors = self.theme.gantt_bar
         for i, pid in enumerate(pids):
             y = 20 + i * rh
-            self.create_text(5, y + rh//2, text=pid, anchor="w", fill=self.theme.text_sec, font=("monospace", 9))
+            self.create_text(5, y + rh//2, text=pid, anchor="w", fill=self.theme.text_secondary, font=("monospace", 9))
             bc = colors[i % len(colors)]
             for seg in self.timeline:
                 if seg["pid"] != pid or seg["start"] >= self.cursor: continue
@@ -44,7 +44,7 @@ class GanttWidget(tk.Canvas):
         for t in range(0, end_t + 1):
             x = lm + int(t / total * cw)
             self.create_line(x, 10, x, 20 + rows * rh + 4, fill="#444", width=1)
-            self.create_text(x, 20 + rows * rh + 4, text=str(t), fill=self.theme.text_sec, font=("monospace", 8))
+            self.create_text(x, 20 + rows * rh + 4, text=str(t), fill=self.theme.text_secondary, font=("monospace", 8))
         cx_x = lm + int(self.cursor / total * cw)
         self.create_line(cx_x, 8, cx_x, 20 + rows * rh + 4, fill=self.theme.warn, width=2)
         self.create_text(cx_x, 20 + rows * rh + 16, text=f"▲ t={self.cursor:.0f}", fill=self.theme.warn, font=("monospace", 9))
