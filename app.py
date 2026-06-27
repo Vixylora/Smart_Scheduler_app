@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys, subprocess, logging
 _missing = []
 for pkg in ["customtkinter", "yaml"]:

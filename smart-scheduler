@@ -2,9 +2,12 @@
 import os, sys
 
 VENV = os.path.join(os.path.dirname(__file__), ".venv")
-PYTHON = os.path.join(VENV, "bin", "python3")
-if not os.path.exists(PYTHON):
-    PYTHON = os.path.join(VENV, "bin", "python")
+if os.name == "nt":
+    PYTHON = os.path.join(VENV, "Scripts", "python.exe")
+else:
+    PYTHON = os.path.join(VENV, "bin", "python3")
+    if not os.path.exists(PYTHON):
+        PYTHON = os.path.join(VENV, "bin", "python")
 
 if os.path.exists(PYTHON):
     os.execv(PYTHON, [PYTHON, os.path.join(os.path.dirname(__file__), "app.py")] + sys.argv[1:])
