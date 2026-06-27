@@ -1,7 +1,7 @@
 # Smart Scheduler – CPU Scheduling Simulator
 
 A Python/CustomTkinter application for simulating, comparing, and visualizing CPU scheduling algorithms.
-Created by **Younes Benamour** & **Takieddine Nouar**
+Created by **Younes Benamour**, **Younes Ramdani** & **Takieddine Nouar**
 
 ## What It Does
 
