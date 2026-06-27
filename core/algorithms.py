@@ -149,8 +149,8 @@ def simulate(processes, options):
         best_idx = 0
         best_val = None
         for i, p in enumerate(ready):
-            if best_val is None or (p.priority, p.arrival, p.pid) < best_val:
-                best_val = (p.priority, p.arrival, p.pid)
+            if best_val is None or (-p.priority, p.arrival, p.pid) < best_val:
+                best_val = (-p.priority, p.arrival, p.pid)
                 best_idx = i
         return best_idx
 
