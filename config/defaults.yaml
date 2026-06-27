@@ -41,6 +41,7 @@ ui:
     width: 1100
     height: 750
   gantt:
+    height: 260
     row_height_min: 28
     row_height_max: 40
     margin_left: 50
